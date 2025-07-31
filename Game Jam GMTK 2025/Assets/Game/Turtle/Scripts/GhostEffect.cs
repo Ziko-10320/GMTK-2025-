@@ -9,16 +9,19 @@ public class GhostEffect : MonoBehaviour
     [SerializeField] private float ghostLifetime = 0.5f; // How long a ghost stays on screen
     [SerializeField] private Color ghostColor = new Color(1f, 1f, 1f, 0.5f); // The color and transparency of the ghost
 
+    [Header("Sprite Renderers")]
+    [SerializeField] public SpriteRenderer[] playerSpriteRenderers; // Public array for manual assignment
+
     private bool isGhosting = false;
     private float timer;
 
-    // We get all sprite renderers from the player's children at the start
-    private SpriteRenderer[] playerSpriteRenderers;
-
     void Awake()
     {
-        // Find all SpriteRenderer components in this GameObject and its children
-        playerSpriteRenderers = GetComponentsInChildren<SpriteRenderer>();
+        // If no sprite renderers are manually assigned, find them automatically
+        if (playerSpriteRenderers == null || playerSpriteRenderers.Length == 0)
+        {
+            playerSpriteRenderers = GetComponentsInChildren<SpriteRenderer>();
+        }
     }
 
     void Update()
@@ -48,6 +51,17 @@ public class GhostEffect : MonoBehaviour
         isGhosting = false;
     }
 
+    public bool IsEffectActive()
+    {
+        return isGhosting;
+    }
+
+    // New Initialize method to set sprite renderers dynamically
+    public void Initialize(SpriteRenderer[] renderers)
+    {
+        playerSpriteRenderers = renderers;
+    }
+
     private void SpawnGhost()
     {
         // Create an empty parent object for the entire ghost snapshot
@@ -59,8 +73,8 @@ public class GhostEffect : MonoBehaviour
         // Iterate through each of the player's sprite renderers
         foreach (SpriteRenderer playerPartSprite in playerSpriteRenderers)
         {
-            // Skip any disabled parts
-            if (!playerPartSprite.enabled) continue;
+            // Skip any disabled or null parts
+            if (playerPartSprite == null || !playerPartSprite.enabled) continue;
 
             // Create a new child GameObject for this specific part
             GameObject ghostPart = new GameObject("Ghost Part");
@@ -111,3 +125,5 @@ public class GhostEffect : MonoBehaviour
         }
     }
 }
+
+

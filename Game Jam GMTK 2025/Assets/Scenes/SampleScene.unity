@@ -220,10 +220,10 @@ PrefabInstance:
       addedObject: {fileID: 256560343}
     - targetCorrespondingSourceObject: {fileID: -8653719598885068355, guid: c428a178ee11c7648b1dd38d242452bb, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 256560348}
+      addedObject: {fileID: 256560347}
     - targetCorrespondingSourceObject: {fileID: -8653719598885068355, guid: c428a178ee11c7648b1dd38d242452bb, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 256560347}
+      addedObject: {fileID: 256560350}
   m_SourcePrefab: {fileID: 4843985084834002234, guid: c428a178ee11c7648b1dd38d242452bb, type: 3}
 --- !u!1 &256560342 stripped
 GameObject:
@@ -277,7 +277,7 @@ Rigidbody2D:
   m_Interpolate: 0
   m_SleepingMode: 1
   m_CollisionDetection: 0
-  m_Constraints: 0
+  m_Constraints: 4
 --- !u!70 &256560345
 CapsuleCollider2D:
   m_ObjectHideFlags: 0
@@ -333,7 +333,8 @@ MonoBehaviour:
   ghostSpawnInterval: 0.01
   ghostLifetime: 0.1
   ghostColor: {r: 1, g: 1, b: 1, a: 0.4392157}
---- !u!114 &256560348
+  playerSpriteRenderers: []
+--- !u!114 &256560350
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -345,16 +346,28 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 43325acb219a8f243bfd94c4109be318, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  moveSpeed: 9
+  moveSpeed: 8
   isFacingRight: 1
   jumpForce: 20
   groundCheck: {fileID: 1397192196}
   groundLayer:
     serializedVersion: 2
-    m_Bits: 64
+    m_Bits: 192
   dashSpeed: 30
-  dashDuration: 0.3
+  dashDuration: 0.25
   dashCooldown: 1
+  cloneRecordDuration: 3
+  cloneScaleFactor: 1.5
+  clonePlaybackSpeed: 0.5
+  respawnPoint: {fileID: 1562269634}
+  clonePrefab: {fileID: 8300948653662941014, guid: bf4a8cd2426fdb8429faf6e0dd81480d, type: 3}
+  maxActiveClones: 2
+  cloneStunDuration: 2
+  uiTimerSlider: {fileID: 0}
+  volumeSlider: {fileID: 0}
+  cloneAudioSource: {fileID: 0}
+  cloneAudioClip: {fileID: 0}
+  cloneAudioVolume: 1
 --- !u!1 &493694179
 GameObject:
   m_ObjectHideFlags: 3
@@ -401,7 +414,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_BindingMode: 1
-  m_FollowOffset: {x: 0, y: 4.367878, z: -10}
+  m_FollowOffset: {x: 0, y: 6.9304733, z: -10}
   m_XDamping: 1
   m_YDamping: 1
   m_ZDamping: 1
@@ -485,7 +498,7 @@ Camera:
   far clip plane: 1000
   field of view: 60
   orthographic: 1
-  orthographic size: 4.99
+  orthographic size: 8.85
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -510,7 +523,7 @@ Transform:
   m_GameObject: {fileID: 519420028}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -2.99, y: 0.49787807, z: -10}
+  m_LocalPosition: {x: -0.94, y: 2.6804733, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -648,10 +661,10 @@ MonoBehaviour:
   m_Priority: 5
   m_StandbyUpdate: 2
   m_LookAt: {fileID: 0}
-  m_Follow: {fileID: 256560346}
+  m_Follow: {fileID: 1248323213}
   m_Lens:
     FieldOfView: 60
-    OrthographicSize: 4.99
+    OrthographicSize: 8.85
     NearClipPlane: 0.3
     FarClipPlane: 1000
     Dutch: 0
@@ -849,6 +862,37 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 256560346}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1562269633
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1562269634}
+  m_Layer: 0
+  m_Name: RespawnPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1562269634
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1562269633}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -8.54, y: -2.97, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1763190797
 GameObject:
@@ -1071,4 +1115,5 @@ SceneRoots:
   - {fileID: 519420032}
   - {fileID: 1248323213}
   - {fileID: 1857608025}
+  - {fileID: 1562269634}
   - {fileID: 127731936}
