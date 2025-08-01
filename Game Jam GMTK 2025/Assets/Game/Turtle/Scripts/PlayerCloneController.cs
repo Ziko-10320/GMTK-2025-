@@ -52,6 +52,13 @@ public class PlayerCloneController : MonoBehaviour
     private float originalGravity;
     private Vector2 dashDirectionVector;
 
+    [Header("Pickable Object Interaction")]
+    [SerializeField] private Transform pickPoint; // Point où l'objet sera tenu
+    [SerializeField] private float pickUpRange = 1f; // Portée de ramassage de l'objet
+    [SerializeField] private KeyCode pickUpThrowKey = KeyCode.G; // Touche pour ramasser/lancer
+    [SerializeField] private float throwForce = 10f; // Force de lancer de l'objet
+    private GameObject heldObject = null; // Référence à l'objet actuellement tenu
+
     // Clone System
     [Header("Clone System")]
     [SerializeField] private float cloneRecordDuration = 3f;
@@ -177,35 +184,86 @@ public class PlayerCloneController : MonoBehaviour
         {
             StunAllActiveClones();
         }
-    }
 
-    void FixedUpdate()
-    {
-        if (!isDashing)
+        // Pick up / Throw Object
+        if (Input.GetKeyDown(pickUpThrowKey))
         {
-            rb.velocity = new Vector2(horizontalMovement * moveSpeed, rb.velocity.y);
-        }
-        else
-        {
-            // Apply dash movement in FixedUpdate for consistent physics
-            rb.velocity = new Vector2(dashDirectionVector.x * dashSpeed, 0);
-        }
+            if (heldObject == null) // Try to pick up
+            {
+                Collider2D[] hitColliders = Physics2D.OverlapCircleAll(transform.position, pickUpRange);
+                foreach (Collider2D hitCollider in hitColliders)
+                {
+                    // Vérifier si l'objet a le tag "JumpPad" ou "Box"
+                    if (hitCollider.CompareTag("JumpPad") || hitCollider.CompareTag("Box"))
+                    {
+                        IPickable pickableObject = hitCollider.gameObject.GetComponent<IPickable>();
+                        if (pickableObject != null)
+                        {
+                            heldObject = hitCollider.gameObject;
+                            heldObject.transform.position = pickPoint.position;
+                            heldObject.transform.SetParent(pickPoint);
 
-        // Record snapshot during recording
-        if (isRecording && Time.time >= lastSnapshotTime + snapshotInterval)
-        {
-            RecordSnapshot();
-            lastSnapshotTime = Time.time;
+                            // Désactiver la physique et les colliders de l'objet ramassable
+                            pickableObject.SetPhysicsAndCollidersEnabled(false);
+                            Debug.Log($"Object {heldObject.name} picked up!");
+                            break;
+                        }
+                    }
+                }
+            }
+            else // Throw Object
+            {
+                // Détacher l'objet du joueur
+                heldObject.transform.SetParent(null);
+
+                // Réactiver la physique et les colliders de l'objet ramassable
+                IPickable pickableObject = heldObject.GetComponent<IPickable>();
+                if (pickableObject != null)
+                {
+                    pickableObject.SetPhysicsAndCollidersEnabled(true);
+                }
+
+                Rigidbody2D objectRb = heldObject.GetComponent<Rigidbody2D>();
+                if (objectRb != null)
+                {
+                    // Réinitialiser la vélocité et appliquer une nouvelle vélocité pour le lancer
+                    objectRb.velocity = Vector2.zero; // S'assurer qu'il n'y a pas de vélocité résiduelle
+                    Vector2 throwDirection = isFacingRight ? Vector2.right : Vector2.left;
+                    objectRb.velocity = throwDirection * throwForce; // Appliquer la vélocité directement
+                }
+
+                heldObject = null;
+                Debug.Log("Object thrown!");
+            }
         }
     }
+        void FixedUpdate()
+        {
+            if (!isDashing)
+            {
+                rb.velocity = new Vector2(horizontalMovement * moveSpeed, rb.velocity.y);
+            }
+            else
+            {
+                // Apply dash movement in FixedUpdate for consistent physics
+                rb.velocity = new Vector2(dashDirectionVector.x * dashSpeed, 0);
+            }
 
-    void Flip()
-    {
-        isFacingRight = !isFacingRight;
-        Vector3 scaler = transform.localScale;
-        scaler.x *= -1;
-        transform.localScale = scaler;
-    }
+            // Record snapshot during recording
+            if (isRecording && Time.time >= lastSnapshotTime + snapshotInterval)
+            {
+                RecordSnapshot();
+                lastSnapshotTime = Time.time;
+            }
+        }
+
+        void Flip()
+        {
+            isFacingRight = !isFacingRight;
+            Vector3 scaler = transform.localScale;
+            scaler.x *= -1;
+            transform.localScale = scaler;
+        }
 
     private IEnumerator StartDash()
     {
@@ -499,7 +557,6 @@ public class PlayerCloneController : MonoBehaviour
         Debug.Log($"All active clones stunned for {cloneStunDuration} seconds!");
     }
 
-
     private void ResetPlayerState()
     {
         // Reset Rigidbody2D properties
@@ -572,8 +629,10 @@ public class PlayerCloneController : MonoBehaviour
         Debug.Log("All clones destroyed!");
     }
 }
-
-
+public interface IPickable
+{
+    void SetPhysicsAndCollidersEnabled(bool enabled);
+}
 
 
 

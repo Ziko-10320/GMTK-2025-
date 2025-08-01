@@ -366,5 +366,3 @@ public class ClonePlayback : MonoBehaviour
         }
     }
 }
-
-  
