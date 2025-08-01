@@ -465,6 +465,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   playbackSpeed: 0.3
   debugMode: 1
+  enablePlatformPhysics: 0
 --- !u!212 &8452868809796221073 stripped
 SpriteRenderer:
   m_CorrespondingSourceObject: {fileID: -9107487447521331590, guid: c428a178ee11c7648b1dd38d242452bb, type: 3}

@@ -72,11 +72,13 @@ public class PlayerCloneController : MonoBehaviour
     [Header("Clone Stun")]
     [SerializeField] private float cloneStunDuration = 2f; // Durée d'étourdissement des clones
 
-    // Moving Platform System
+    // Moving Platform System - IMPROVED
     [Header("Moving Platform")]
     [SerializeField] private LayerMask clonePlatformLayer; // Layer for clones acting as platforms
     private Transform currentPlatformClone; // Reference to the clone the player is currently on
     private Vector3 lastPlatformPosition; // To track platform movement
+    private Vector3 platformVelocity; // Track platform velocity for smooth movement
+    private bool wasOnPlatform = false; // Track if player was on platform last frame
 
     // UI Elements
     [Header("UI Elements")]
@@ -345,22 +347,29 @@ public class PlayerCloneController : MonoBehaviour
             }
         }
     }
+
     void FixedUpdate()
     {
-        // Moving Platform Logic
-        HandleMovingPlatform();
+        // La logique de la plateforme mobile est maintenant gérée en premier
+        // pour déterminer si le joueur est sur une plateforme et obtenir sa vélocité.
+        Vector2 platformVelocity = HandleMovingPlatformImproved();
 
+        // Calculer la vélocité cible du joueur basée sur l'input
+        float targetVelocityX = horizontalMovement * moveSpeed;
+
+        // Appliquer la vélocité du joueur ET celle de la plateforme
         if (!isDashing)
         {
-            rb.velocity = new Vector2(horizontalMovement * moveSpeed, rb.velocity.y);
+            // La nouvelle vélocité est la vélocité cible du joueur + la vélocité de la plateforme
+            rb.velocity = new Vector2(targetVelocityX + platformVelocity.x, rb.velocity.y);
         }
         else
         {
-            // Apply dash movement in FixedUpdate for consistent physics
+            // La logique du dash reste inchangée
             rb.velocity = new Vector2(dashDirectionVector.x * dashSpeed, 0);
         }
 
-        // Record snapshot during recording
+        // L'enregistrement du snapshot reste ici
         if (isRecording && Time.time >= lastSnapshotTime + snapshotInterval)
         {
             RecordSnapshot();
@@ -368,50 +377,43 @@ public class PlayerCloneController : MonoBehaviour
         }
     }
 
-    void HandleMovingPlatform()
+    // SYSTÈME DE PLATEFORME MOBILE AMÉLIORÉ ET CORRIGÉ
+    Vector2 HandleMovingPlatformImproved()
     {
-        // Check if the player is grounded on a clone platform
+        // Vérifie si le joueur est au sol sur une plateforme clone
         Collider2D hit = Physics2D.OverlapCircle(groundCheck.position, 0.2f, clonePlatformLayer);
+        bool isOnClonePlatform = hit != null && isGrounded;
 
-        if (hit != null && isGrounded) // Player is on a clone platform
+        if (isOnClonePlatform)
         {
-            if (currentPlatformClone == null) // Just landed on a new platform
+            Transform clonePlatform = hit.transform;
+
+            // Si on vient d'atterrir sur la plateforme
+            if (currentPlatformClone != clonePlatform)
             {
-                currentPlatformClone = hit.transform;
+                currentPlatformClone = clonePlatform;
                 lastPlatformPosition = currentPlatformClone.position;
-                transform.SetParent(currentPlatformClone); // Parent the player to the clone
-                Debug.Log($"Player parented to clone: {currentPlatformClone.name}");
-            }
-            else if (currentPlatformClone != hit.transform) // Switched to a different clone platform
-            {
-                transform.SetParent(null); // Detach from old
-                currentPlatformClone = hit.transform;
-                lastPlatformPosition = currentPlatformClone.position;
-                transform.SetParent(currentPlatformClone); // Parent to new
-                Debug.Log($"Player switched parent to clone: {currentPlatformClone.name}");
             }
 
-            // If the platform moves, apply its movement to the player's Rigidbody
-            if (currentPlatformClone != null && currentPlatformClone.position != lastPlatformPosition)
-            {
-                Vector3 platformMovement = currentPlatformClone.position - lastPlatformPosition;
-                // Only apply horizontal movement from the platform to the player's Rigidbody
-                // This allows the player to still control their vertical movement (jumping)
-                rb.position += new Vector2(platformMovement.x, 0);
-                lastPlatformPosition = currentPlatformClone.position;
-            }
+            // Calculer le mouvement de la plateforme depuis la dernière frame physique
+            Vector3 platformMovement = currentPlatformClone.position - lastPlatformPosition;
+            lastPlatformPosition = currentPlatformClone.position;
+
+            // Retourner la vélocité de la plateforme pour l'utiliser dans FixedUpdate
+            // Cela permet au joueur de "coller" à la plateforme tout en se déplaçant librement
+            return platformMovement / Time.fixedDeltaTime;
         }
-        else // Player is not on a clone platform or is not grounded
+        else
         {
+            // Si le joueur n'est pas sur une plateforme, on réinitialise
             if (currentPlatformClone != null)
             {
-                transform.SetParent(null); // Detach the player from the clone
                 currentPlatformClone = null;
-                Debug.Log("Player detached from clone.");
             }
+            // Aucune vélocité de plateforme à appliquer
+            return Vector2.zero;
         }
     }
-
     void Flip()
     {
         isFacingRight = !isFacingRight;
@@ -425,9 +427,8 @@ public class PlayerCloneController : MonoBehaviour
         isDashing = true;
         canDash = false;
         rb.gravityScale = 0f; // Disable gravity during dash
-        rb.velocity = Vector2.zero; // Reset velocity
-
         dashDirectionVector = isFacingRight ? Vector2.right : Vector2.left;
+        rb.velocity = new Vector2(dashDirectionVector.x * dashSpeed, 0);
 
         if (ghostEffect != null)
         {
@@ -460,33 +461,27 @@ public class PlayerCloneController : MonoBehaviour
         isRecording = true;
         recordingTimer = 0f;
         recordedSnapshots.Clear();
-        lastSnapshotTime = 0f;
+        lastSnapshotTime = Time.time;
 
-        // Show UI timer
+        // UI feedback
         if (uiTimerSlider != null)
         {
-            uiTimerSlider.maxValue = cloneRecordDuration;
-            uiTimerSlider.value = 0f;
             uiTimerSlider.gameObject.SetActive(true);
         }
 
-        // Play audio
+        // Audio feedback
         if (cloneSystemAudioSource != null && cloneStartSoundClip != null)
         {
             cloneSystemAudioSource.PlayOneShot(cloneStartSoundClip, cloneStartSoundVolume);
         }
+
+        // Start recording loop sound
         if (cloneSystemAudioSource != null && cloneRecordingLoopSoundClip != null)
         {
             cloneSystemAudioSource.clip = cloneRecordingLoopSoundClip;
             cloneSystemAudioSource.volume = cloneRecordingLoopSoundVolume;
             cloneSystemAudioSource.loop = true;
             cloneSystemAudioSource.Play();
-        }
-
-        // Start ghost effect for player during recording
-        if (ghostEffect != null)
-        {
-            ghostEffect.StartGhostEffect();
         }
 
         Debug.Log("Clone recording started!");
@@ -496,23 +491,58 @@ public class PlayerCloneController : MonoBehaviour
     {
         recordingTimer += Time.deltaTime;
 
-        // Update UI timer
+        // Update UI
         if (uiTimerSlider != null)
         {
             uiTimerSlider.value = recordingTimer;
         }
 
-        // Check if recording is complete
+        // Auto-stop recording when duration is reached
         if (recordingTimer >= cloneRecordDuration)
         {
             EndCloneRecording();
         }
     }
 
+    private void EndCloneRecording()
+    {
+        if (!isRecording) return;
+
+        isRecording = false;
+
+        // UI feedback
+        if (uiTimerSlider != null)
+        {
+            uiTimerSlider.gameObject.SetActive(false);
+        }
+
+        // Stop recording loop sound
+        if (cloneSystemAudioSource != null && cloneSystemAudioSource.clip == cloneRecordingLoopSoundClip)
+        {
+            cloneSystemAudioSource.Stop();
+        }
+
+        // Audio feedback
+        if (cloneSystemAudioSource != null && cloneEndSoundClip != null)
+        {
+            cloneSystemAudioSource.PlayOneShot(cloneEndSoundClip, cloneEndSoundVolume);
+        }
+
+        // Create clone if we have recorded snapshots
+        if (recordedSnapshots.Count > 0)
+        {
+            CreateClone();
+        }
+        // Respawn player after cloning, but not through the death mechanism
+        RespawnPlayerWithoutDeath();
+
+        Debug.Log($"Clone recording ended! Recorded {recordedSnapshots.Count} snapshots.");
+    }
+
     private void RecordSnapshot()
     {
         string currentAnimationState = GetCurrentAnimationState();
-
+        
         PlayerSnapshot snapshot = new PlayerSnapshot(
             transform.position,
             transform.rotation,
@@ -528,202 +558,49 @@ public class PlayerCloneController : MonoBehaviour
 
     private string GetCurrentAnimationState()
     {
-        if (animator == null) return "Idle";
-
-        AnimatorStateInfo stateInfo = animator.GetCurrentAnimatorStateInfo(0);
-
-        if (stateInfo.IsName("Dash"))
-            return "Dash";
-        else if (stateInfo.IsName("Jump"))
-            return "Jump";
-        else if (stateInfo.IsName("Run"))
-            return "Run";
-        else
-            return "Idle";
-    }
-    private void EndCloneRecording()
-    {
-        isRecording = false;
-
-        // Hide UI timer
-        if (uiTimerSlider != null)
-        {
-            uiTimerSlider.gameObject.SetActive(false);
-        }
-
-        // Stop audio
-        if (cloneSystemAudioSource != null)
-        {
-            cloneSystemAudioSource.Stop();
-            if (cloneEndSoundClip != null)
-            {
-                cloneSystemAudioSource.PlayOneShot(cloneEndSoundClip, cloneEndSoundVolume);
-            }
-        }
-
-        // Stop ghost effect for player after recording
-        if (ghostEffect != null)
-        {
-            ghostEffect.StopGhostEffect();
-        }
-
-        // Create clone if snapshots exist
-        if (recordedSnapshots.Count > 0)
-        {
-            CreateCloneAndRespawnPlayer();
-        }
-
-        Debug.Log("Clone recording ended!");
+        if (isDashing) return "Dash";
+        if (!isGrounded) return "Jump";
+        if (horizontalMovement != 0) return "Run";
+        return "Idle";
     }
 
-    private void CreateCloneAndRespawnPlayer()
+    private void CreateClone()
     {
-        if (clonePrefab != null && recordedSnapshots.Count > 0)
-        {
-            // Handle max active clones - Clean up null references first
-            CleanupActiveClones();
-
-            // Destroy oldest clones if we're at the limit
-            while (activeClones.Count >= maxActiveClones)
-            {
-                DestroyOldestClone();
-            }
-
-            // Create new clone
-            CreateNewClone();
-        }
-
-        // Respawn player immediately
-        RespawnPlayer();
-    }
-
-    private void CleanupActiveClones()
-    {
-        // Remove null entries from the list (clones that might have been destroyed manually)
-        for (int i = activeClones.Count - 1; i >= 0; i--)
-        {
-            if (activeClones[i] == null)
-            {
-                activeClones.RemoveAt(i);
-            }
-        }
-    }
-
-    private void DestroyOldestClone()
-    {
-        if (activeClones.Count > 0)
+        // Remove oldest clone if we've reached the limit
+        if (activeClones.Count >= maxActiveClones)
         {
             GameObject oldestClone = activeClones[0];
             activeClones.RemoveAt(0);
-            if (oldestClone != null)
-            {
-                Destroy(oldestClone);
-                Debug.Log("Destroyed oldest clone to make space for new one.");
-            }
+            Destroy(oldestClone);
         }
-    }
 
-    private void CreateNewClone()
-    {
-        // Instantiate clone at the first recorded position
-        Vector3 cloneStartPosition = recordedSnapshots[0].position;
-        GameObject cloneInstance = Instantiate(clonePrefab, cloneStartPosition, Quaternion.identity);
-
+        // Instantiate new clone
+        GameObject newClone = Instantiate(clonePrefab, recordedSnapshots[0].position, recordedSnapshots[0].rotation);
+        
         // Scale the clone
-        cloneInstance.transform.localScale = Vector3.one * cloneScaleFactor;
+        newClone.transform.localScale = transform.localScale * cloneScaleFactor;
 
-        // Get the ClonePlayback component and pass the recorded data
-        ClonePlayback clonePlayback = cloneInstance.GetComponent<ClonePlayback>();
+        // Initialize clone playback
+        ClonePlayback clonePlayback = newClone.GetComponent<ClonePlayback>();
         if (clonePlayback != null)
         {
             clonePlayback.InitializeClone(recordedSnapshots, clonePlaybackSpeed);
         }
 
-        // Add new clone to active clones list
-        activeClones.Add(cloneInstance);
+        // Add to active clones list
+        activeClones.Add(newClone);
 
-        Debug.Log("Clone created successfully! Current active clones: " + activeClones.Count);
+        // Audio feedback
+        if (cloneAudioSource != null && cloneAudioClip != null)
+        {
+            cloneAudioSource.PlayOneShot(cloneAudioClip, cloneAudioVolume);
+        }
+
+        Debug.Log($"Clone created! Active clones: {activeClones.Count}");
     }
-
-    private void RespawnPlayer()
-    {
-        // Start the respawn process
-        StartCoroutine(RespawnPlayerCoroutine());
-    }
-
-    private IEnumerator RespawnPlayerCoroutine()
-    {
-        if (respawnAudioSource != null && respawnSoundClip != null)
-        {
-            respawnAudioSource.PlayOneShot(respawnSoundClip, respawnSoundVolume);
-        }
-        // Step 1: Désactiver le rendu et les colliders du joueur au lieu de désactiver l'objet entier
-        SetPlayerVisualsAndColliders(false);
-        Debug.Log("Player 'despawned' for respawn!");
-
-        // Step 2: Attendre un court délai pour simuler le 'despawn'
-        yield return new WaitForSeconds(0.1f); // Petit délai pour rendre le 'despawn' visible
-
-        // Step 3: Déplacer le joueur au point de respawn
-        if (respawnPoint != null)
-        {
-            transform.position = respawnPoint.position;
-            transform.rotation = respawnPoint.rotation;
-        }
-        else
-        {
-            Debug.LogWarning("RespawnPoint n'est pas assigné ! Le joueur réapparaîtra à l'origine.");
-            transform.position = Vector3.zero;
-        }
-
-        // Step 4: Réinitialiser l'état du joueur et sa santé
-        ResetPlayerState();
-        if (playerHealth != null)
-        {
-            playerHealth.ResetHealth();
-        }
-
-        // Step 5: S'assurer que le joueur fait face à droite
-        EnsureFacingRight();
-
-        // Step 6: Réactiver le rendu et les colliders du joueur
-        SetPlayerVisualsAndColliders(true);
-
-        Debug.Log("Player respawned at RespawnPoint!");
-    }
-
-    private void SetPlayerVisualsAndColliders(bool active)
-    {
-        // Gérer les SpriteRenderers
-        SpriteRenderer[] renderers = GetComponentsInChildren<SpriteRenderer>();
-        foreach (SpriteRenderer renderer in renderers)
-        {
-            renderer.enabled = active;
-        }
-
-        // Gérer les Colliders 2D
-        Collider2D[] colliders = GetComponentsInChildren<Collider2D>();
-        foreach (Collider2D collider in colliders)
-        {
-            collider.enabled = active;
-        }
-
-        // Gérer le Rigidbody2D
-        if (rb != null)
-        {
-            rb.simulated = active; // Désactiver la simulation physique lorsque le joueur est 'désactivé'
-        }
-
-        // S'assurer que le script PlayerCloneController reste actif
-        this.enabled = true; // Le script doit toujours être actif pour gérer les entrées et le clonage
-    }
-
-
-
 
     private void StunAllActiveClones()
     {
-        CleanupActiveClones(); // Ensure the list is clean
         foreach (GameObject clone in activeClones)
         {
             if (clone != null)
@@ -735,69 +612,59 @@ public class PlayerCloneController : MonoBehaviour
                 }
             }
         }
-        Debug.Log($"All active clones stunned for {cloneStunDuration} seconds!");
+
+        Debug.Log($"Stunned {activeClones.Count} clones for {cloneStunDuration} seconds.");
     }
 
-    private void ResetPlayerState()
+    private void RespawnPlayerWithoutDeath()
     {
-        // Reset Rigidbody2D properties
-        if (rb != null)
+        if (respawnPoint != null)
         {
+            transform.position = respawnPoint.position;
             rb.velocity = Vector2.zero;
-            rb.angularVelocity = 0f;
-            rb.gravityScale = originalGravity;
-            rb.simulated = true;
-        }
 
-        // Reset other player states
-        isDashing = false;
-        canDash = true;
-        horizontalMovement = 0f;
+            // Reset platform tracking when respawning
+            currentPlatformClone = null;
+            platformVelocity = Vector3.zero;
+            wasOnPlatform = false;
+
+            // Audio feedback
+            if (respawnAudioSource != null && respawnSoundClip != null)
+            {
+                respawnAudioSource.PlayOneShot(respawnSoundClip, respawnSoundVolume);
+            }
+
+            Debug.Log("Player respawned without death!");
+        }
     }
 
-    private void EnsureFacingRight()
+    // RESTORED RESPAWN LOGIC (for actual death)
+    private void RespawnPlayer()
     {
-        // Force player to face right after respawn
-        if (!isFacingRight)
+        // Destroy all active clones when player respawns (dies)
+        DestroyAllActiveClones();
+
+        if (respawnPoint != null)
         {
-            isFacingRight = true;
-            Vector3 scaler = transform.localScale;
-            scaler.x = Mathf.Abs(scaler.x); // Ensure positive scale for facing right
-            transform.localScale = scaler;
+            transform.position = respawnPoint.position;
+            rb.velocity = Vector2.zero;
+
+            // Reset platform tracking when respawning
+            currentPlatformClone = null;
+            platformVelocity = Vector3.zero;
+            wasOnPlatform = false;
+
+            // Audio feedback
+            if (respawnAudioSource != null && respawnSoundClip != null)
+            {
+                respawnAudioSource.PlayOneShot(respawnSoundClip, respawnSoundVolume);
+            }
+
+            Debug.Log("Player respawned after death!");
         }
     }
 
-    private void OnVolumeChanged(float value)
-    {
-        cloneAudioVolume = value;
-        if (cloneAudioSource != null)
-        {
-            cloneAudioSource.volume = cloneAudioVolume;
-        }
-    }
-
-    // Public method to get clone settings (for external configuration)
-    public void SetCloneSettings(float recordDuration, float scaleFactor, float playbackSpeed)
-    {
-        cloneRecordDuration = recordDuration;
-        cloneScaleFactor = scaleFactor;
-        clonePlaybackSpeed = playbackSpeed;
-
-        if (uiTimerSlider != null)
-        {
-            uiTimerSlider.maxValue = cloneRecordDuration;
-        }
-    }
-
-    // Public method to get current active clones count (for debugging)
-    public int GetActiveCloneCount()
-    {
-        CleanupActiveClones();
-        return activeClones.Count;
-    }
-
-    // Public method to manually destroy all clones
-    public void DestroyAllClones()
+    private void DestroyAllActiveClones()
     {
         foreach (GameObject clone in activeClones)
         {
@@ -807,9 +674,39 @@ public class PlayerCloneController : MonoBehaviour
             }
         }
         activeClones.Clear();
-        Debug.Log("All clones destroyed!");
+        Debug.Log("All active clones destroyed.");
+    }
+
+    private void OnVolumeChanged(float volume)
+    {
+        cloneAudioVolume = volume;
+        if (cloneAudioSource != null)
+        {
+            cloneAudioSource.volume = cloneAudioVolume;
+        }
+    }
+
+    // Gizmos for debugging
+    void OnDrawGizmosSelected()
+    {
+        if (groundCheck != null)
+        {
+            Gizmos.color = Color.red;
+            Gizmos.DrawWireSphere(groundCheck.position, 0.2f);
+        }
+
+        if (pickPoint != null)
+        {
+            Gizmos.color = Color.blue;
+            Gizmos.DrawWireSphere(pickPoint.position, 0.1f);
+        }
+
+        // Draw pickup range
+        Gizmos.color = Color.green;
+        Gizmos.DrawWireSphere(transform.position, pickUpRange);
     }
 }
+
 public interface IPickable
 {
     void SetPhysicsAndCollidersEnabled(bool enabled);
