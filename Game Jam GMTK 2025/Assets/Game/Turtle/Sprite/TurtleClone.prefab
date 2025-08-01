@@ -463,10 +463,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 54e006e2cb13c024496c983c6fe7ea2d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  playbackSpeed: 0.2
-  debugMode: 0
-  clonePickPoint: {fileID: 0}
-  objectRespawnPoint: {fileID: 0}
+  playbackSpeed: 0.3
+  debugMode: 1
 --- !u!212 &8452868809796221073 stripped
 SpriteRenderer:
   m_CorrespondingSourceObject: {fileID: -9107487447521331590, guid: c428a178ee11c7648b1dd38d242452bb, type: 3}

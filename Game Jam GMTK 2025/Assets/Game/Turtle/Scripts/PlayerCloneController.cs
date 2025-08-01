@@ -72,6 +72,12 @@ public class PlayerCloneController : MonoBehaviour
     [Header("Clone Stun")]
     [SerializeField] private float cloneStunDuration = 2f; // Durée d'étourdissement des clones
 
+    // Moving Platform System
+    [Header("Moving Platform")]
+    [SerializeField] private LayerMask clonePlatformLayer; // Layer for clones acting as platforms
+    private Transform currentPlatformClone; // Reference to the clone the player is currently on
+    private Vector3 lastPlatformPosition; // To track platform movement
+
     // UI Elements
     [Header("UI Elements")]
     [SerializeField] private Slider uiTimerSlider;
@@ -81,7 +87,37 @@ public class PlayerCloneController : MonoBehaviour
     [Header("Audio")]
     [SerializeField] private AudioSource cloneAudioSource;
     [SerializeField] private AudioClip cloneAudioClip;
-    [SerializeField] private float cloneAudioVolume = 1f;
+    [SerializeField][Range(0f, 1f)] private float cloneAudioVolume = 1f;
+
+    [Header("Respawn Audio")]
+    [SerializeField] private AudioSource respawnAudioSource;
+    [SerializeField] private AudioClip respawnSoundClip;
+    [SerializeField][Range(0f, 1f)] private float respawnSoundVolume = 1f;
+
+    [Header("Movement Audio")]
+    [SerializeField] private AudioSource movementAudioSource; // AudioSource for movement sounds (run, jump, fall)
+    [SerializeField] private AudioClip runSoundClip;
+    [SerializeField][Range(0f, 1f)] private float runSoundVolume = 1f;
+    [SerializeField] private AudioClip jumpSoundClip;
+    [SerializeField][Range(0f, 1f)] private float jumpSoundVolume = 1f;
+    [SerializeField] private AudioClip fallSoundClip;
+    [SerializeField][Range(0f, 1f)] private float fallSoundVolume = 1f;
+
+    [Header("Dash Audio")]
+    [SerializeField] private AudioSource dashAudioSource;
+    [SerializeField] private AudioClip dashSoundClip;
+    [SerializeField][Range(0f, 1f)] private float dashSoundVolume = 1f;
+
+    [Header("Clone System Audio")]
+    [SerializeField] private AudioSource cloneSystemAudioSource; // General AudioSource for clone system sounds
+    [SerializeField] private AudioClip cloneStartSoundClip; // Sound for starting clone recording
+    [SerializeField][Range(0f, 1f)] private float cloneStartSoundVolume = 1f;
+    [SerializeField] private AudioClip cloneRecordingLoopSoundClip; // Loop sound during recording
+    [SerializeField][Range(0f, 1f)] private float cloneRecordingLoopSoundVolume = 1f;
+    [SerializeField] private AudioClip cloneEndSoundClip; // Sound for ending clone recording/creation
+    [SerializeField][Range(0f, 1f)] private float cloneEndSoundVolume = 1f;
+    [SerializeField] private AudioClip stunSoundClip; // Sound for stunning clones
+    [SerializeField][Range(0f, 1f)] private float stunSoundVolume = 1f;
 
     // Clone Recording
     private bool isRecording = false;
@@ -94,6 +130,7 @@ public class PlayerCloneController : MonoBehaviour
     private Rigidbody2D rb;
     private Animator animator;
     private GhostEffect ghostEffect;
+    private PlayerHealth playerHealth; // Reference to PlayerHealth script
 
     void Start()
     {
@@ -124,12 +161,62 @@ public class PlayerCloneController : MonoBehaviour
             cloneAudioSource.volume = cloneAudioVolume;
             cloneAudioSource.clip = cloneAudioClip;
         }
+
+        if (respawnAudioSource == null)
+        {
+            respawnAudioSource = GetComponent<AudioSource>();
+            if (respawnAudioSource == null)
+            {
+                respawnAudioSource = gameObject.AddComponent<AudioSource>();
+            }
+        }
+        respawnAudioSource.volume = respawnSoundVolume;
+        respawnAudioSource.playOnAwake = false;
+
+        if (movementAudioSource == null)
+        {
+            movementAudioSource = GetComponent<AudioSource>();
+            if (movementAudioSource == null)
+            {
+                movementAudioSource = gameObject.AddComponent<AudioSource>();
+            }
+        }
+        movementAudioSource.volume = runSoundVolume; // Default to run volume
+        movementAudioSource.playOnAwake = false;
+
+        if (cloneSystemAudioSource == null)
+        {
+            cloneSystemAudioSource = GetComponent<AudioSource>();
+            if (cloneSystemAudioSource == null)
+            {
+                cloneSystemAudioSource = gameObject.AddComponent<AudioSource>();
+            }
+        }
+        cloneSystemAudioSource.volume = cloneStartSoundVolume; // Default to clone start volume
+        cloneSystemAudioSource.playOnAwake = false;
+
+        // Initialize PlayerHealth and subscribe to death event
+        playerHealth = GetComponent<PlayerHealth>();
+        if (playerHealth != null)
+        {
+            playerHealth.OnPlayerDeath += RespawnPlayer; // Subscribe to the death event
+        }
     }
 
     void Update()
     {
         // Vérification du sol
+        bool wasGrounded = isGrounded;
         isGrounded = Physics2D.OverlapCircle(groundCheck.position, 0.2f, groundLayer);
+
+        // Handle fall sound
+        if (!isGrounded && wasGrounded && rb.velocity.y < 0) // Just started falling
+        {
+            if (movementAudioSource != null && fallSoundClip != null)
+            {
+                movementAudioSource.PlayOneShot(fallSoundClip, fallSoundVolume);
+            }
+        }
 
         // Clone recording trigger
         if (Input.GetKeyDown(KeyCode.E))
@@ -154,6 +241,19 @@ public class PlayerCloneController : MonoBehaviour
         // Le joueur peut toujours bouger pendant l'enregistrement
         horizontalMovement = Input.GetAxisRaw("Horizontal");
 
+        // Handle run sound
+        if (isGrounded && horizontalMovement != 0 && !movementAudioSource.isPlaying && runSoundClip != null)
+        {
+            movementAudioSource.clip = runSoundClip;
+            movementAudioSource.volume = runSoundVolume;
+            movementAudioSource.loop = true;
+            movementAudioSource.Play();
+        }
+        else if ((!isGrounded || horizontalMovement == 0) && movementAudioSource.clip == runSoundClip)
+        {
+            movementAudioSource.Stop();
+        }
+
         // Animation de course
         animator.SetBool("isRunning", horizontalMovement != 0);
 
@@ -171,6 +271,10 @@ public class PlayerCloneController : MonoBehaviour
         if (Input.GetButtonDown("Jump") && isGrounded && !isDashing)
         {
             rb.velocity = new Vector2(rb.velocity.x, jumpForce);
+            if (movementAudioSource != null && jumpSoundClip != null)
+            {
+                movementAudioSource.PlayOneShot(jumpSoundClip, jumpSoundVolume);
+            }
         }
 
         // Dash
@@ -183,6 +287,10 @@ public class PlayerCloneController : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.F))
         {
             StunAllActiveClones();
+            if (cloneSystemAudioSource != null && stunSoundClip != null)
+            {
+                cloneSystemAudioSource.PlayOneShot(stunSoundClip, stunSoundVolume);
+            }
         }
 
         // Pick up / Throw Object
@@ -237,33 +345,80 @@ public class PlayerCloneController : MonoBehaviour
             }
         }
     }
-        void FixedUpdate()
-        {
-            if (!isDashing)
-            {
-                rb.velocity = new Vector2(horizontalMovement * moveSpeed, rb.velocity.y);
-            }
-            else
-            {
-                // Apply dash movement in FixedUpdate for consistent physics
-                rb.velocity = new Vector2(dashDirectionVector.x * dashSpeed, 0);
-            }
+    void FixedUpdate()
+    {
+        // Moving Platform Logic
+        HandleMovingPlatform();
 
-            // Record snapshot during recording
-            if (isRecording && Time.time >= lastSnapshotTime + snapshotInterval)
-            {
-                RecordSnapshot();
-                lastSnapshotTime = Time.time;
-            }
+        if (!isDashing)
+        {
+            rb.velocity = new Vector2(horizontalMovement * moveSpeed, rb.velocity.y);
+        }
+        else
+        {
+            // Apply dash movement in FixedUpdate for consistent physics
+            rb.velocity = new Vector2(dashDirectionVector.x * dashSpeed, 0);
         }
 
-        void Flip()
+        // Record snapshot during recording
+        if (isRecording && Time.time >= lastSnapshotTime + snapshotInterval)
         {
-            isFacingRight = !isFacingRight;
-            Vector3 scaler = transform.localScale;
-            scaler.x *= -1;
-            transform.localScale = scaler;
+            RecordSnapshot();
+            lastSnapshotTime = Time.time;
         }
+    }
+
+    void HandleMovingPlatform()
+    {
+        // Check if the player is grounded on a clone platform
+        Collider2D hit = Physics2D.OverlapCircle(groundCheck.position, 0.2f, clonePlatformLayer);
+
+        if (hit != null && isGrounded) // Player is on a clone platform
+        {
+            if (currentPlatformClone == null) // Just landed on a new platform
+            {
+                currentPlatformClone = hit.transform;
+                lastPlatformPosition = currentPlatformClone.position;
+                transform.SetParent(currentPlatformClone); // Parent the player to the clone
+                Debug.Log($"Player parented to clone: {currentPlatformClone.name}");
+            }
+            else if (currentPlatformClone != hit.transform) // Switched to a different clone platform
+            {
+                transform.SetParent(null); // Detach from old
+                currentPlatformClone = hit.transform;
+                lastPlatformPosition = currentPlatformClone.position;
+                transform.SetParent(currentPlatformClone); // Parent to new
+                Debug.Log($"Player switched parent to clone: {currentPlatformClone.name}");
+            }
+
+            // If the platform moves, apply its movement to the player's Rigidbody
+            if (currentPlatformClone != null && currentPlatformClone.position != lastPlatformPosition)
+            {
+                Vector3 platformMovement = currentPlatformClone.position - lastPlatformPosition;
+                // Only apply horizontal movement from the platform to the player's Rigidbody
+                // This allows the player to still control their vertical movement (jumping)
+                rb.position += new Vector2(platformMovement.x, 0);
+                lastPlatformPosition = currentPlatformClone.position;
+            }
+        }
+        else // Player is not on a clone platform or is not grounded
+        {
+            if (currentPlatformClone != null)
+            {
+                transform.SetParent(null); // Detach the player from the clone
+                currentPlatformClone = null;
+                Debug.Log("Player detached from clone.");
+            }
+        }
+    }
+
+    void Flip()
+    {
+        isFacingRight = !isFacingRight;
+        Vector3 scaler = transform.localScale;
+        scaler.x *= -1;
+        transform.localScale = scaler;
+    }
 
     private IEnumerator StartDash()
     {
@@ -279,6 +434,11 @@ public class PlayerCloneController : MonoBehaviour
             ghostEffect.StartGhostEffect();
         }
         animator.SetTrigger("Dash");
+
+        if (dashAudioSource != null && dashSoundClip != null)
+        {
+            dashAudioSource.PlayOneShot(dashSoundClip, dashSoundVolume);
+        }
 
         yield return new WaitForSeconds(dashDuration);
 
@@ -311,9 +471,16 @@ public class PlayerCloneController : MonoBehaviour
         }
 
         // Play audio
-        if (cloneAudioSource != null && cloneAudioClip != null)
+        if (cloneSystemAudioSource != null && cloneStartSoundClip != null)
         {
-            cloneAudioSource.Play();
+            cloneSystemAudioSource.PlayOneShot(cloneStartSoundClip, cloneStartSoundVolume);
+        }
+        if (cloneSystemAudioSource != null && cloneRecordingLoopSoundClip != null)
+        {
+            cloneSystemAudioSource.clip = cloneRecordingLoopSoundClip;
+            cloneSystemAudioSource.volume = cloneRecordingLoopSoundVolume;
+            cloneSystemAudioSource.loop = true;
+            cloneSystemAudioSource.Play();
         }
 
         // Start ghost effect for player during recording
@@ -374,7 +541,6 @@ public class PlayerCloneController : MonoBehaviour
         else
             return "Idle";
     }
-
     private void EndCloneRecording()
     {
         isRecording = false;
@@ -386,9 +552,13 @@ public class PlayerCloneController : MonoBehaviour
         }
 
         // Stop audio
-        if (cloneAudioSource != null)
+        if (cloneSystemAudioSource != null)
         {
-            cloneAudioSource.Stop();
+            cloneSystemAudioSource.Stop();
+            if (cloneEndSoundClip != null)
+            {
+                cloneSystemAudioSource.PlayOneShot(cloneEndSoundClip, cloneEndSoundVolume);
+            }
         }
 
         // Stop ghost effect for player after recording
@@ -397,10 +567,13 @@ public class PlayerCloneController : MonoBehaviour
             ghostEffect.StopGhostEffect();
         }
 
-        Debug.Log($"Clone recording ended! Recorded {recordedSnapshots.Count} snapshots.");
+        // Create clone if snapshots exist
+        if (recordedSnapshots.Count > 0)
+        {
+            CreateCloneAndRespawnPlayer();
+        }
 
-        // Create clone and respawn player
-        CreateCloneAndRespawnPlayer();
+        Debug.Log("Clone recording ended!");
     }
 
     private void CreateCloneAndRespawnPlayer()
@@ -480,6 +653,10 @@ public class PlayerCloneController : MonoBehaviour
 
     private IEnumerator RespawnPlayerCoroutine()
     {
+        if (respawnAudioSource != null && respawnSoundClip != null)
+        {
+            respawnAudioSource.PlayOneShot(respawnSoundClip, respawnSoundVolume);
+        }
         // Step 1: Désactiver le rendu et les colliders du joueur au lieu de désactiver l'objet entier
         SetPlayerVisualsAndColliders(false);
         Debug.Log("Player 'despawned' for respawn!");
@@ -499,8 +676,12 @@ public class PlayerCloneController : MonoBehaviour
             transform.position = Vector3.zero;
         }
 
-        // Step 4: Réinitialiser l'état du joueur
+        // Step 4: Réinitialiser l'état du joueur et sa santé
         ResetPlayerState();
+        if (playerHealth != null)
+        {
+            playerHealth.ResetHealth();
+        }
 
         // Step 5: S'assurer que le joueur fait face à droite
         EnsureFacingRight();
@@ -633,6 +814,3 @@ public interface IPickable
 {
     void SetPhysicsAndCollidersEnabled(bool enabled);
 }
-
-
-
