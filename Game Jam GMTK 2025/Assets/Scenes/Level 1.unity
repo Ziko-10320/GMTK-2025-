@@ -322,7 +322,7 @@ Transform:
   m_LocalScale: {x: 1.0703, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 811009406}
+  m_Father: {fileID: 377918445}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!61 &115465511
 BoxCollider2D:
@@ -466,7 +466,7 @@ Transform:
   m_LocalScale: {x: 1.1035205, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 811009406}
+  m_Father: {fileID: 377918445}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!61 &233122442
 BoxCollider2D:
@@ -586,6 +586,18 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 2756368185995721322, guid: eb0d06cbad8880f4095e09032dcfd828, type: 3}
+      propertyPath: m_Name
+      value: Objects
+      objectReference: {fileID: 0}
+    - target: {fileID: 3892757178719966677, guid: eb0d06cbad8880f4095e09032dcfd828, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -0.8
+      objectReference: {fileID: 0}
+    - target: {fileID: 3892757178719966677, guid: eb0d06cbad8880f4095e09032dcfd828, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 2.11
+      objectReference: {fileID: 0}
     - target: {fileID: 79327825451310764, guid: 062226457c6506949b3574f6c607a0cc, type: 3}
       propertyPath: m_Sprite
       value: 
@@ -601,14 +613,6 @@ PrefabInstance:
     - target: {fileID: 79327825451310764, guid: 062226457c6506949b3574f6c607a0cc, type: 3}
       propertyPath: m_Color.r
       value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 1595558445387578237, guid: 062226457c6506949b3574f6c607a0cc, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: -0.8
-      objectReference: {fileID: 0}
-    - target: {fileID: 1595558445387578237, guid: 062226457c6506949b3574f6c607a0cc, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 2.11
       objectReference: {fileID: 0}
     - target: {fileID: 2155669168869959071, guid: 062226457c6506949b3574f6c607a0cc, type: 3}
       propertyPath: m_Size.x
@@ -694,10 +698,6 @@ PrefabInstance:
       propertyPath: m_LocalPosition.y
       value: -2.41
       objectReference: {fileID: 0}
-    - target: {fileID: 6438531429608618062, guid: 062226457c6506949b3574f6c607a0cc, type: 3}
-      propertyPath: m_Name
-      value: Objects
-      objectReference: {fileID: 0}
     - target: {fileID: 6962827475115337092, guid: 062226457c6506949b3574f6c607a0cc, type: 3}
       propertyPath: m_Layer
       value: 9
@@ -713,23 +713,28 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects:
-    - targetCorrespondingSourceObject: {fileID: 4247736811477462178, guid: 062226457c6506949b3574f6c607a0cc, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 487300794}
-    - targetCorrespondingSourceObject: {fileID: 4247736811477462178, guid: 062226457c6506949b3574f6c607a0cc, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 774182467}
-    - targetCorrespondingSourceObject: {fileID: 4247736811477462178, guid: 062226457c6506949b3574f6c607a0cc, type: 3}
+    - targetCorrespondingSourceObject: {fileID: 3892757178719966677, guid: eb0d06cbad8880f4095e09032dcfd828, type: 3}
       insertIndex: -1
       addedObject: {fileID: 115465510}
-    - targetCorrespondingSourceObject: {fileID: 4247736811477462178, guid: 062226457c6506949b3574f6c607a0cc, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 795176480}
-    - targetCorrespondingSourceObject: {fileID: 4247736811477462178, guid: 062226457c6506949b3574f6c607a0cc, type: 3}
+    - targetCorrespondingSourceObject: {fileID: 3892757178719966677, guid: eb0d06cbad8880f4095e09032dcfd828, type: 3}
       insertIndex: -1
       addedObject: {fileID: 233122441}
+    - targetCorrespondingSourceObject: {fileID: 3892757178719966677, guid: eb0d06cbad8880f4095e09032dcfd828, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 487300794}
+    - targetCorrespondingSourceObject: {fileID: 3892757178719966677, guid: eb0d06cbad8880f4095e09032dcfd828, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 774182467}
+    - targetCorrespondingSourceObject: {fileID: 3892757178719966677, guid: eb0d06cbad8880f4095e09032dcfd828, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 795176480}
     m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: 062226457c6506949b3574f6c607a0cc, type: 3}
+  m_SourcePrefab: {fileID: 100100000, guid: eb0d06cbad8880f4095e09032dcfd828, type: 3}
+--- !u!4 &377918445 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 3892757178719966677, guid: eb0d06cbad8880f4095e09032dcfd828, type: 3}
+  m_PrefabInstance: {fileID: 377918444}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &381122037 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 1220714983488333816, guid: fe451974ab4b0a94eb82ea44f16bf4e8, type: 3}
@@ -767,7 +772,7 @@ Transform:
   m_LocalScale: {x: 1.0201, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 811009406}
+  m_Father: {fileID: 377918445}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!61 &487300795
 BoxCollider2D:
@@ -911,7 +916,7 @@ Transform:
   m_LocalScale: {x: 1.0201, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 811009406}
+  m_Father: {fileID: 377918445}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!61 &774182468
 BoxCollider2D:
@@ -1055,7 +1060,7 @@ Transform:
   m_LocalScale: {x: 1.0502, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 811009406}
+  m_Father: {fileID: 377918445}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!61 &795176481
 BoxCollider2D:
@@ -1297,11 +1302,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1185449679}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!4 &811009406 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 4247736811477462178, guid: 062226457c6506949b3574f6c607a0cc, type: 3}
-  m_PrefabInstance: {fileID: 377918444}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &958285562
 GameObject:
   m_ObjectHideFlags: 0

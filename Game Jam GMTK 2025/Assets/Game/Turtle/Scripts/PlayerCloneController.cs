@@ -80,6 +80,8 @@ public class PlayerCloneController : MonoBehaviour
     private Vector3 platformVelocity; // Track platform velocity for smooth movement
     private bool wasOnPlatform = false; // Track if player was on platform last frame
 
+    public bool IsRecordingClone { get { return isRecording; } }
+
     // UI Elements
     [Header("UI Elements")]
     [SerializeField] private Slider uiTimerSlider;
@@ -425,16 +427,21 @@ public class PlayerCloneController : MonoBehaviour
     private IEnumerator StartDash()
     {
         isDashing = true;
+        if (ghostEffect != null)
+        {
+            ghostEffect.StartGhostEffect();
+        }
+
         canDash = false;
         rb.gravityScale = 0f; // Disable gravity during dash
         dashDirectionVector = isFacingRight ? Vector2.right : Vector2.left;
         rb.velocity = new Vector2(dashDirectionVector.x * dashSpeed, 0);
 
-        if (ghostEffect != null)
+        if (animator != null)
         {
-            ghostEffect.StartGhostEffect();
+            animator.SetTrigger("Dash");
         }
-        animator.SetTrigger("Dash");
+
 
         if (dashAudioSource != null && dashSoundClip != null)
         {
@@ -509,35 +516,52 @@ public class PlayerCloneController : MonoBehaviour
         if (!isRecording) return;
 
         isRecording = false;
-
-        // UI feedback
         if (uiTimerSlider != null)
         {
             uiTimerSlider.gameObject.SetActive(false);
         }
 
-        // Stop recording loop sound
-        if (cloneSystemAudioSource != null && cloneSystemAudioSource.clip == cloneRecordingLoopSoundClip)
-        {
-            cloneSystemAudioSource.Stop();
-        }
-
-        // Audio feedback
         if (cloneSystemAudioSource != null && cloneEndSoundClip != null)
         {
             cloneSystemAudioSource.PlayOneShot(cloneEndSoundClip, cloneEndSoundVolume);
         }
 
-        // Create clone if we have recorded snapshots
-        if (recordedSnapshots.Count > 0)
+        if (recordedSnapshots.Count == 0)
         {
-            CreateClone();
+            Debug.Log("No snapshots recorded or recording cancelled. Player will respawn.");
+            RespawnPlayerWithoutDeath(); // <-- AJOUTEZ CETTE LIGNE ICI
+            return;
         }
-        // Respawn player after cloning, but not through the death mechanism
+        // *** AJOUTEZ CETTE CONDITION ICI ***
+        if (recordedSnapshots.Count == 0)
+        {
+            Debug.Log("No snapshots recorded or recording cancelled. Clone will not be spawned.");
+            return; // Ne pas créer de clone si aucun snapshot n'a été enregistré ou si l'enregistrement a été annulé
+        }
+
+        // Si le nombre de clones actifs dépasse la limite, détruire le plus ancien
+        if (activeClones.Count >= maxActiveClones)
+        {
+            Destroy(activeClones[0]);
+            activeClones.RemoveAt(0);
+        }
+
+        // Créer le clone
+        GameObject newClone = Instantiate(clonePrefab, respawnPoint.position, Quaternion.identity);
+        newClone.transform.localScale = transform.localScale * cloneScaleFactor; // Appliquer le facteur d'échelle
+        ClonePlayback clonePlayback = newClone.GetComponent<ClonePlayback>();
+        if (clonePlayback != null)
+        {
+            clonePlayback.InitializeClone(recordedSnapshots, clonePlaybackSpeed);
+        }
+        activeClones.Add(newClone);
+
         RespawnPlayerWithoutDeath();
 
-        Debug.Log($"Clone recording ended! Recorded {recordedSnapshots.Count} snapshots.");
+        // Effacer les snapshots pour le prochain enregistrement
+        recordedSnapshots.Clear();
     }
+
 
     private void RecordSnapshot()
     {
@@ -662,6 +686,14 @@ public class PlayerCloneController : MonoBehaviour
 
             Debug.Log("Player respawned after death!");
         }
+        // Annuler l'enregistrement du clone si le joueur meurt pendant celui-ci
+        if (isRecording)
+        {
+            recordedSnapshots.Clear();
+            EndCloneRecording(); // Appelle la fonction pour arrêter l'enregistrement et nettoyer
+            Debug.Log("Clone recording cancelled due to player death.");
+        }
+
     }
 
     private void DestroyAllActiveClones()

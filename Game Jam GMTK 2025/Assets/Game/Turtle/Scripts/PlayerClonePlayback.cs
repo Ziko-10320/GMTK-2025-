@@ -5,7 +5,7 @@ using UnityEngine;
 public class ClonePlayback : MonoBehaviour
 {
     [Header("Clone Settings")]
-    [SerializeField] private float playbackSpeed = 0.75f;
+    [SerializeField] private float playbackSpeed = 0.2f;
     [SerializeField] private bool debugMode = false;
 
     // Playback data
@@ -41,7 +41,8 @@ public class ClonePlayback : MonoBehaviour
         // Disable physics for the clone initially
         if (rb != null)
         {
-            rb.isKinematic = true;
+            rb.bodyType = RigidbodyType2D.Static;
+
         }
 
         // Start ghost effect for the clone permanently
@@ -68,10 +69,12 @@ public class ClonePlayback : MonoBehaviour
     public void InitializeClone(List<PlayerSnapshot> recordedSnapshots, float speed)
     {
         snapshots = new List<PlayerSnapshot>(recordedSnapshots);
-        playbackSpeed = speed;
+        
         playbackTime = 0f;
         isPlaying = true;
         playingForward = true; // Start playing forward
+
+        
 
         if (snapshots.Count > 0)
         {
@@ -255,10 +258,11 @@ public class ClonePlayback : MonoBehaviour
         isPlaying = false; // Arrêter la lecture
         if (rb != null)
         {
-            rb.isKinematic = true; // Geler la physique
+            rb.bodyType = RigidbodyType2D.Kinematic; // Geler la physique
             rb.velocity = Vector2.zero;
             rb.angularVelocity = 0f;
         }
+
 
         // Geler l'animation
         if (animator != null)
@@ -286,7 +290,8 @@ public class ClonePlayback : MonoBehaviour
         // Restaurer l'état physique
         if (rb != null)
         {
-            rb.isKinematic = false; // Restaurer la physique
+            rb.bodyType = RigidbodyType2D.Static; // Restaurer la physique
+
         }
 
         // Restaurer l'animation

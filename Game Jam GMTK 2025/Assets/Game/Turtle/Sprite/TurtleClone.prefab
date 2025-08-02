@@ -145,11 +145,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -7552582706839291426, guid: c428a178ee11c7648b1dd38d242452bb, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -10.255266
+      value: -8.694847
       objectReference: {fileID: 0}
     - target: {fileID: -7552582706839291426, guid: c428a178ee11c7648b1dd38d242452bb, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -2.0429094
+      value: -1.4639704
       objectReference: {fileID: 0}
     - target: {fileID: -7552582706839291426, guid: c428a178ee11c7648b1dd38d242452bb, type: 3}
       propertyPath: m_LocalPosition.z
@@ -350,7 +350,7 @@ CapsuleCollider2D:
   m_GameObject: {fileID: 8300948653662941014}
   m_Enabled: 1
   m_Density: 1
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 6200000, guid: a3c656949d218924ba605f521e03b125, type: 2}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -373,8 +373,8 @@ CapsuleCollider2D:
   m_IsTrigger: 0
   m_UsedByEffector: 0
   m_UsedByComposite: 0
-  m_Offset: {x: 0.056763183, y: 1.0393378}
-  m_Size: {x: 1.8369615, y: 1.0047432}
+  m_Offset: {x: 0.0919341, y: 1.0585188}
+  m_Size: {x: 1.8495531, y: 0.9663831}
   m_Direction: 1
 --- !u!50 &9074715895088903633
 Rigidbody2D:
@@ -384,11 +384,11 @@ Rigidbody2D:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8300948653662941014}
-  m_BodyType: 0
+  m_BodyType: 2
   m_Simulated: 1
   m_UseFullKinematicContacts: 0
   m_UseAutoMass: 0
-  m_Mass: 1
+  m_Mass: 1.88
   m_LinearDrag: 0
   m_AngularDrag: 0.05
   m_GravityScale: 5
@@ -464,8 +464,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   playbackSpeed: 0.3
-  debugMode: 1
-  enablePlatformPhysics: 0
+  debugMode: 0
 --- !u!212 &8452868809796221073 stripped
 SpriteRenderer:
   m_CorrespondingSourceObject: {fileID: -9107487447521331590, guid: c428a178ee11c7648b1dd38d242452bb, type: 3}
