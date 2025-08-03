@@ -15,7 +15,7 @@ GameObject:
   - component: {fileID: 8617377015779334951}
   - component: {fileID: 1667786716873981333}
   - component: {fileID: 805754413062214335}
-  m_Layer: 6
+  m_Layer: 0
   m_Name: JumpPad
   m_TagString: JumpPad
   m_Icon: {fileID: 0}
@@ -31,7 +31,7 @@ Transform:
   m_GameObject: {fileID: 2316241500710009371}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.0023416965, z: -0, w: 0.99999726}
-  m_LocalPosition: {x: -2.63, y: 3.04, z: -0.05}
+  m_LocalPosition: {x: -17.4, y: 1, z: 0}
   m_LocalScale: {x: 0.81011623, y: 0.9750683, z: 1.4705493}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -174,6 +174,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   bounceForce: 70
+  stopThreshold: 0.1
+  stopCheckDelay: 1
+  respawnPoint: {fileID: 4610035007607515537, guid: 8534f7a2fe4c43f44811e0085d37b516, type: 3}
   bounceEffectPrefab: {fileID: 0}
   bounceSound: {fileID: 0}
 --- !u!114 &1667786716873981333
@@ -242,7 +245,7 @@ Transform:
   m_GameObject: {fileID: 2343250673267943490}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -13.89, y: 1.24, z: 0}
+  m_LocalPosition: {x: -13.26, y: 1.32, z: 0}
   m_LocalScale: {x: 0.86742, y: 0.86742, z: 0.86742}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -384,6 +387,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 025743a49e3b23f45a9e137f6a38e444, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  stopThreshold: 0.1
+  stopCheckDelay: 1
+  respawnPoint: {fileID: 8771094825318599356, guid: f4f88b8ab075f644dbdf42feb61e7901, type: 3}
 --- !u!114 &6158457514077909886
 MonoBehaviour:
   m_ObjectHideFlags: 0

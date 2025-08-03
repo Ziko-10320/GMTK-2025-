@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using FirstGearGames.SmoothCameraShaker;
 
 [System.Serializable]
 public class PlayerSnapshot
@@ -140,6 +141,8 @@ public class PlayerCloneController : MonoBehaviour
     [SerializeField] private AudioClip stunSoundClip; // Sound for stunning clones
     [SerializeField][Range(0f, 1f)] private float stunSoundVolume = 1f;
     public GameObject HeldObject { get { return heldObject; } }
+
+    public ShakeData CameraShakeStun;
     // Clone Recording
     private bool isRecording = false;
     private float recordingTimer = 0f;
@@ -224,6 +227,15 @@ public class PlayerCloneController : MonoBehaviour
         if (playerHealth != null)
         {
             playerHealth.OnPlayerDeath += OnPlayerDied;
+        }
+
+        if (glowSprite1 != null)
+        {
+            originalMaterial1 = glowSprite1.material;
+        }
+        if (glowSprite2 != null)
+        {
+            originalMaterial2 = glowSprite2.material;
         }
 
         // Initialize PlayerHealth and subscribe to death event
@@ -796,10 +808,14 @@ public class PlayerCloneController : MonoBehaviour
 
     private void StunAllActiveClones()
     {
+        CameraShakerHandler.Shake(CameraShakeStun);
+
         foreach (GameObject clone in activeClones)
         {
             if (clone != null)
             {
+                ApplyStunGlowToClone(clone);
+
                 ClonePlayback clonePlayback = clone.GetComponent<ClonePlayback>();
                 if (clonePlayback != null)
                 {
@@ -810,6 +826,48 @@ public class PlayerCloneController : MonoBehaviour
 
         Debug.Log($"Stunned {activeClones.Count} clones for {cloneStunDuration} seconds.");
     }
+    // Dans PlayerCloneController.cs
+
+    private void ApplyStunGlowToClone(GameObject clone)
+    {
+        // Trouver les SpriteRenderer du clone (même structure que le joueur)
+        SpriteRenderer[] cloneSprites = clone.GetComponentsInChildren<SpriteRenderer>();
+
+        // Appliquer le matériau de glow aux deux premiers sprites (comme pour le joueur)
+        if (cloneSprites.Length >= 1 && glowMaterial1 != null)
+        {
+            cloneSprites[0].material = glowMaterial1;
+        }
+        if (cloneSprites.Length >= 2 && glowMaterial2 != null)
+        {
+            cloneSprites[1].material = glowMaterial2;
+        }
+
+        // Démarrer la coroutine pour restaurer les matériaux après l'étourdissement
+        StartCoroutine(RestoreCloneMaterialsAfterStun(clone, cloneSprites));
+    }
+    // Dans PlayerCloneController.cs
+
+    private IEnumerator RestoreCloneMaterialsAfterStun(GameObject clone, SpriteRenderer[] cloneSprites)
+    {
+        // Attendre la durée de l'étourdissement
+        yield return new WaitForSeconds(cloneStunDuration);
+
+        // Vérifier que le clone existe encore
+        if (clone != null && cloneSprites != null)
+        {
+            // Restaurer les matériaux originaux
+            if (cloneSprites.Length >= 1 && originalMaterial1 != null)
+            {
+                cloneSprites[0].material = originalMaterial1;
+            }
+            if (cloneSprites.Length >= 2 && originalMaterial2 != null)
+            {
+                cloneSprites[1].material = originalMaterial2;
+            }
+        }
+    }
+
 
     private void RespawnPlayerWithoutDeath()
     {
