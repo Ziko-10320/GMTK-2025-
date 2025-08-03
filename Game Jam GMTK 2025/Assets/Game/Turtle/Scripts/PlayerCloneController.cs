@@ -39,7 +39,7 @@ public class PlayerCloneController : MonoBehaviour
     [SerializeField] private float jumpForce = 10f;
     [SerializeField] private Transform groundCheck;
     [SerializeField] private LayerMask groundLayer;
-    private bool isGrounded;
+    public bool isGrounded;
 
     // Dash
     [Header("Dashing")]
@@ -139,7 +139,7 @@ public class PlayerCloneController : MonoBehaviour
     [SerializeField][Range(0f, 1f)] private float cloneEndSoundVolume = 1f;
     [SerializeField] private AudioClip stunSoundClip; // Sound for stunning clones
     [SerializeField][Range(0f, 1f)] private float stunSoundVolume = 1f;
-
+    public GameObject HeldObject { get { return heldObject; } }
     // Clone Recording
     private bool isRecording = false;
     private float recordingTimer = 0f;
@@ -220,6 +220,11 @@ public class PlayerCloneController : MonoBehaviour
         }
         cloneSystemAudioSource.volume = cloneStartSoundVolume; // Default to clone start volume
         cloneSystemAudioSource.playOnAwake = false;
+
+        if (playerHealth != null)
+        {
+            playerHealth.OnPlayerDeath += OnPlayerDied;
+        }
 
         // Initialize PlayerHealth and subscribe to death event
         playerHealth = GetComponent<PlayerHealth>();
@@ -455,6 +460,49 @@ public class PlayerCloneController : MonoBehaviour
      }
     }
 
+    private void OnPlayerDied()
+    {
+        if (isRecording)
+        {
+            Debug.Log("Player died during clone recording - cancelling recording!");
+            CancelCloneRecording();
+        }
+    }
+    public void CancelCloneRecording()
+    {
+        if (!isRecording) return;
+
+        isRecording = false;
+        recordingTimer = 0f;
+        recordedSnapshots.Clear(); // C'est la clé : vider les snapshots enregistrés
+
+        // Ajoutez ici le code pour arrêter les effets visuels/audio de l'enregistrement
+        // (ex: arrêter le système de particules, restaurer les matériaux de glow, arrêter les sons de boucle)
+        if (cloningParticleSystem != null && cloningParticleSystem.isPlaying)
+        {
+            cloningParticleSystem.Stop();
+        }
+        if (glowSprite1 != null && originalMaterial1 != null)
+        {
+            glowSprite1.material = originalMaterial1;
+        }
+
+        if (glowSprite2 != null && originalMaterial2 != null)
+        {
+            glowSprite2.material = originalMaterial2;
+        }
+        
+        Debug.Log("Clone recording cancelled!");
+    }
+
+    void OnDestroy()
+    {
+        if (playerHealth != null)
+        {
+            playerHealth.OnPlayerDeath -= OnPlayerDied;
+        }
+    }
+
     private IEnumerator StartDash()
     {
         isDashing = true;
@@ -548,6 +596,24 @@ public class PlayerCloneController : MonoBehaviour
         Debug.Log("Clone recording started!");
     }
 
+    public void DropHeldObject()
+    {
+        if (heldObject != null)
+        {
+            // Détacher l'objet du joueur
+            heldObject.transform.SetParent(null);
+
+            // Réactiver la physique et les colliders de l'objet ramassable
+            IPickable pickableObject = heldObject.GetComponent<IPickable>();
+            if (pickableObject != null)
+            {
+                pickableObject.SetPhysicsAndCollidersEnabled(true);
+            }
+
+            heldObject = null;
+            Debug.Log("Object dropped.");
+        }
+    }
     public void ResetPlayerState()
     {
         // Réinitialiser les variables de dash
@@ -564,6 +630,8 @@ public class PlayerCloneController : MonoBehaviour
             animator.SetBool("isJumping", false); // Assurez-vous que toutes les animations sont à leur état par défaut
                                                   // Ajoutez ici d'autres paramètres d'animation si nécessaire
         }
+
+        
 
         // Assurez-vous que le joueur est bien orienté (par exemple, vers la droite par défaut)
         if (!isFacingRight)
@@ -593,7 +661,7 @@ public class PlayerCloneController : MonoBehaviour
         }
     }
 
-    private void EndCloneRecording()
+    public void EndCloneRecording()
     {
         if (!isRecording) return;
 
@@ -627,7 +695,19 @@ public class PlayerCloneController : MonoBehaviour
             Destroy(activeClones[0]);
             activeClones.RemoveAt(0);
         }
+        if (cloningParticleSystem != null && cloningParticleSystem.isPlaying)
+        {
+            cloningParticleSystem.Stop();
+        }
+        if (glowSprite1 != null && originalMaterial1 != null)
+        {
+            glowSprite1.material = originalMaterial1;
+        }
 
+        if (glowSprite2 != null && originalMaterial2 != null)
+        {
+            glowSprite2.material = originalMaterial2;
+        }
         // Créer le clone
         GameObject newClone = Instantiate(clonePrefab, respawnPoint.position, Quaternion.identity);
         newClone.transform.localScale = transform.localScale * cloneScaleFactor; // Appliquer le facteur d'échelle
@@ -640,15 +720,7 @@ public class PlayerCloneController : MonoBehaviour
 
         RespawnPlayerWithoutDeath();
 
-    if (glowSprite1 != null && originalMaterial1 != null)
-    {
-        glowSprite1.material = originalMaterial1;
-    }
     
-    if (glowSprite2 != null && originalMaterial2 != null)
-    {
-        glowSprite2.material = originalMaterial2;
-    }
 
      
         if (cloningParticleSystem != null)
@@ -741,6 +813,18 @@ public class PlayerCloneController : MonoBehaviour
 
     private void RespawnPlayerWithoutDeath()
     {
+        if (heldObject != null)
+        {
+            IPickable pickable = heldObject.GetComponent<IPickable>();
+            if (pickable != null)
+            {
+                // Détacher l'objet du joueur AVANT de le faire respawn
+                heldObject.transform.SetParent(null);
+                pickable.Respawn();
+                heldObject = null; // S'assurer que le joueur ne tient plus l'objet
+            }
+        }
+
         if (respawnPoint != null)
         {
             transform.position = respawnPoint.position;
@@ -761,11 +845,7 @@ public class PlayerCloneController : MonoBehaviour
         }
     }
 
-   
-
-   
-
-    private void DestroyAllActiveClones()
+    public void DestroyAllActiveClones()
     {
         foreach (GameObject clone in activeClones)
         {
@@ -811,4 +891,5 @@ public class PlayerCloneController : MonoBehaviour
 public interface IPickable
 {
     void SetPhysicsAndCollidersEnabled(bool enabled);
+    void Respawn();
 }

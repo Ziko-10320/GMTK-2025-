@@ -23,6 +23,7 @@ public class PlayerHealth : MonoBehaviour
 
     void Awake()
     {
+
         currentHealth = maxHealth;
         if (deathAudioSource == null)
         {
@@ -68,6 +69,7 @@ public class PlayerHealth : MonoBehaviour
                 Destroy(ps.gameObject, ps.main.duration);
             }
         }
+        OnPlayerDeath?.Invoke();
 
         // Notifier le GameManager de la mort du joueur
         if (GameManager.Instance != null)

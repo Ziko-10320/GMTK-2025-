@@ -1,6 +1,5 @@
 using UnityEngine;
 using System.Collections;
-
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
@@ -38,13 +37,33 @@ public class GameManager : MonoBehaviour
 
     private IEnumerator RespawnPlayerWithDelay()
     {
+        PlayerCloneController playerCloneController = playerGameObject.GetComponent<PlayerCloneController>();
+        playerCloneController.DestroyAllActiveClones();
         // Assurez-vous que le joueur est désactivé avant d'attendre
         if (playerGameObject != null)
         {
             playerGameObject.SetActive(false);
         }
 
+        playerCloneController.CancelCloneRecording();
+
         yield return new WaitForSeconds(respawnDelay);
+
+        if (playerCloneController != null && playerCloneController.HeldObject != null)
+        {
+            GameObject objectToRespawn = playerCloneController.HeldObject;
+            IPickable pickable = objectToRespawn.GetComponent<IPickable>();
+
+            // Forcer le joueur à lâcher l'objet pour casser le lien de parenté
+            playerCloneController.DropHeldObject();
+
+            // Faire respawn l'objet
+            if (pickable != null)
+            {
+                pickable.Respawn();
+            }
+        }
+
 
         if (playerGameObject != null)
         {
@@ -66,7 +85,7 @@ public class GameManager : MonoBehaviour
             }
         }
 
-       PlayerCloneController playerCloneController = playerGameObject.GetComponent<PlayerCloneController>();
+        
         if (playerCloneController != null)
         {
             playerCloneController.ResetPlayerState();
