@@ -178,45 +178,7 @@ public class PlayerCloneController : MonoBehaviour
             cloneTimerSlider.gameObject.SetActive(true); // La barre est cachée par défaut
         }
 
-        // Initialize audio
-        if (cloneAudioSource != null)
-        {
-            cloneAudioSource.volume = cloneAudioVolume;
-            cloneAudioSource.clip = cloneAudioClip;
-        }
-
-        if (respawnAudioSource == null)
-        {
-            respawnAudioSource = GetComponent<AudioSource>();
-            if (respawnAudioSource == null)
-            {
-                respawnAudioSource = gameObject.AddComponent<AudioSource>();
-            }
-        }
-        respawnAudioSource.volume = respawnSoundVolume;
-        respawnAudioSource.playOnAwake = false;
-
-        if (movementAudioSource == null)
-        {
-            movementAudioSource = GetComponent<AudioSource>();
-            if (movementAudioSource == null)
-            {
-                movementAudioSource = gameObject.AddComponent<AudioSource>();
-            }
-        }
-        movementAudioSource.volume = runSoundVolume; // Default to run volume
-        movementAudioSource.playOnAwake = false;
-
-        if (cloneSystemAudioSource == null)
-        {
-            cloneSystemAudioSource = GetComponent<AudioSource>();
-            if (cloneSystemAudioSource == null)
-            {
-                cloneSystemAudioSource = gameObject.AddComponent<AudioSource>();
-            }
-        }
-        cloneSystemAudioSource.volume = cloneStartSoundVolume; // Default to clone start volume
-        cloneSystemAudioSource.playOnAwake = false;
+        InitializeAllAudioSources();
 
         if (playerHealth != null)
         {
@@ -283,17 +245,25 @@ public class PlayerCloneController : MonoBehaviour
         // Le joueur peut toujours bouger pendant l'enregistrement
         horizontalMovement = Input.GetAxisRaw("Horizontal");
 
-        // Handle run sound
-        if (isGrounded && horizontalMovement != 0 && !movementAudioSource.isPlaying && runSoundClip != null)
+        if (isGrounded && horizontalMovement != 0)
         {
-            movementAudioSource.clip = runSoundClip;
-            movementAudioSource.volume = runSoundVolume;
-            movementAudioSource.loop = true;
-            movementAudioSource.Play();
+            if (movementAudioSource != null && runSoundClip != null)
+            {
+                if (!movementAudioSource.isPlaying || movementAudioSource.clip != runSoundClip)
+                {
+                    movementAudioSource.clip = runSoundClip;
+                    movementAudioSource.volume = runSoundVolume;
+                    movementAudioSource.loop = true;
+                    movementAudioSource.Play();
+                }
+            }
         }
-        else if ((!isGrounded || horizontalMovement == 0) && movementAudioSource.clip == runSoundClip)
+        else
         {
-            movementAudioSource.Stop();
+            if (movementAudioSource != null && movementAudioSource.clip == runSoundClip && movementAudioSource.isPlaying)
+            {
+                movementAudioSource.Stop();
+            }
         }
 
         // Animation de course
@@ -460,7 +430,7 @@ public class PlayerCloneController : MonoBehaviour
         Vector3 scaler = transform.localScale;
         scaler.x *= -1;
         transform.localScale = scaler;
-    if (flipDustParticleSystem != null)
+    if (flipDustParticleSystem != null && isGrounded)
      {
         flipDustParticleSystem.Play();
      }
@@ -533,7 +503,6 @@ public class PlayerCloneController : MonoBehaviour
             animator.SetTrigger("Dash");
         }
 
-
         if (dashAudioSource != null && dashSoundClip != null)
         {
             dashAudioSource.PlayOneShot(dashSoundClip, dashSoundVolume);
@@ -589,25 +558,57 @@ public class PlayerCloneController : MonoBehaviour
             cloneTimerSlider.value = cloneRecordDuration; // La barre est pleine
             cloneTimerSlider.gameObject.SetActive(true); // Afficher la barre
         }
-
-        // Audio feedback
         if (cloneSystemAudioSource != null && cloneStartSoundClip != null)
         {
             cloneSystemAudioSource.PlayOneShot(cloneStartSoundClip, cloneStartSoundVolume);
         }
 
-        // Start recording loop sound
+        // Commencer la boucle audio d\'enregistrement
         if (cloneSystemAudioSource != null && cloneRecordingLoopSoundClip != null)
         {
             cloneSystemAudioSource.clip = cloneRecordingLoopSoundClip;
             cloneSystemAudioSource.volume = cloneRecordingLoopSoundVolume;
             cloneSystemAudioSource.loop = true;
-            cloneSystemAudioSource.Play();
+            cloneSystemAudioSource.PlayDelayed(cloneStartSoundClip != null ? cloneStartSoundClip.length : 0f); // Joue après le son de début
         }
 
         Debug.Log("Clone recording started!");
     }
+    void InitializeAllAudioSources()
+    {
+        // Détruire toutes les AudioSource existantes pour repartir à zéro
+        AudioSource[] existingSources = GetComponents<AudioSource>();
+        for (int i = existingSources.Length - 1; i >= 0; i--)
+        {
+            DestroyImmediate(existingSources[i]);
+        }
 
+        // Recréer toutes les AudioSource
+        movementAudioSource = gameObject.AddComponent<AudioSource>();
+        movementAudioSource.volume = runSoundVolume;
+        movementAudioSource.playOnAwake = false;
+        movementAudioSource.loop = false;
+
+        dashAudioSource = gameObject.AddComponent<AudioSource>();
+        dashAudioSource.volume = dashSoundVolume;
+        dashAudioSource.playOnAwake = false;
+        dashAudioSource.loop = false;
+
+        cloneSystemAudioSource = gameObject.AddComponent<AudioSource>();
+        cloneSystemAudioSource.volume = cloneStartSoundVolume;
+        cloneSystemAudioSource.playOnAwake = false;
+        cloneSystemAudioSource.loop = false;
+
+        respawnAudioSource = gameObject.AddComponent<AudioSource>();
+        respawnAudioSource.volume = respawnSoundVolume;
+        respawnAudioSource.playOnAwake = false;
+        respawnAudioSource.loop = false;
+
+        cloneAudioSource = gameObject.AddComponent<AudioSource>();
+        cloneAudioSource.volume = cloneAudioVolume;
+        cloneAudioSource.playOnAwake = false;
+        cloneAudioSource.loop = false;
+    }
     public void DropHeldObject()
     {
         if (heldObject != null)
@@ -682,6 +683,12 @@ public class PlayerCloneController : MonoBehaviour
             uiTimerSlider.gameObject.SetActive(true);
         }
 
+        if (cloneSystemAudioSource != null && cloneSystemAudioSource.isPlaying && cloneSystemAudioSource.clip == cloneRecordingLoopSoundClip)
+        {
+            cloneSystemAudioSource.Stop();
+        }
+
+        // Jouer le son de fin d\'enregistrement
         if (cloneSystemAudioSource != null && cloneEndSoundClip != null)
         {
             cloneSystemAudioSource.PlayOneShot(cloneEndSoundClip, cloneEndSoundVolume);
