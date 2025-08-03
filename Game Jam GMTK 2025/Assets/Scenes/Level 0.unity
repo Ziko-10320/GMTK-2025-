@@ -535,15 +535,15 @@ RectTransform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 413192519}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.9951553, y: 0.9951553, z: 0.9951553}
+  m_LocalPosition: {x: 0, y: 0, z: -3.4155}
+  m_LocalScale: {x: 1.3997854, y: 1.3997854, z: 1.3997854}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 501701702}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -526, y: 207}
+  m_AnchoredPosition: {x: -482.80002, y: 224.73999}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &413192521
@@ -566,7 +566,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: MY FRIEND LOOPY
+  m_text: LOOPSHELL
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -629,7 +629,7 @@ MonoBehaviour:
   m_VertexBufferAutoSizeReduction: 0
   m_useMaxVisibleDescender: 1
   m_pageToDisplay: 1
-  m_margin: {x: 0, y: 0, z: -558.00385, w: -25.728573}
+  m_margin: {x: 0, y: 0, z: -295.45026, w: -25.728573}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
   m_hasFontAssetChanged: 0
@@ -747,15 +747,15 @@ RectTransform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 501039438}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 16.8}
-  m_LocalScale: {x: 0.9951553, y: 0.9951553, z: 0.9951553}
+  m_LocalPosition: {x: 0, y: 0, z: 20.216}
+  m_LocalScale: {x: 1.3997854, y: 1.3997854, z: 1.3997854}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 501701702}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -529.7, y: 201.5}
+  m_AnchoredPosition: {x: -488, y: 217}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &501039440
@@ -778,7 +778,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: MY FRIEND LOOPY
+  m_text: LOOPSHELL
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -841,7 +841,7 @@ MonoBehaviour:
   m_VertexBufferAutoSizeReduction: 0
   m_useMaxVisibleDescender: 1
   m_pageToDisplay: 1
-  m_margin: {x: 0, y: 0, z: -558.00385, w: -25.728573}
+  m_margin: {x: 0, y: 0, z: -276.6964, w: -25.728573}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
   m_hasFontAssetChanged: 0
@@ -1777,7 +1777,7 @@ Transform:
   m_GameObject: {fileID: 1001842536}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: 0.10362426, w: 0.99461657}
-  m_LocalPosition: {x: 18.07, y: 19.14, z: 0}
+  m_LocalPosition: {x: 19.19, y: 19.22, z: 0}
   m_LocalScale: {x: 1.1237, y: 1.1237, z: 1.1237}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3197,7 +3197,7 @@ SpriteRenderer:
   m_SortingOrder: 0
   m_Sprite: {fileID: -7877557682702818777, guid: 80193dbdbebe92f458f5d331bdcb9662, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_FlipX: 0
+  m_FlipX: 1
   m_FlipY: 0
   m_DrawMode: 0
   m_Size: {x: 1.03, y: 0.77}
@@ -3214,13 +3214,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2087873383}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 27.16, y: 18.48, z: 0}
+  m_LocalRotation: {x: 0.014226109, y: -0, z: -0, w: 0.99989885}
+  m_LocalPosition: {x: 27.63, y: 17.8, z: -0.03}
   m_LocalScale: {x: 1.4596, y: 1.4596, z: 1.4596}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 1.63, y: 0, z: 0}
 --- !u!1001 &5992070407910906
 PrefabInstance:
   m_ObjectHideFlags: 0
