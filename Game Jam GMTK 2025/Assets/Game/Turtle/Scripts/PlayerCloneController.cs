@@ -102,6 +102,7 @@ public class PlayerCloneController : MonoBehaviour
 
     // UI Elements
     [Header("UI Elements")]
+    [SerializeField] private Slider cloneTimerSlider;
     [SerializeField] private Slider uiTimerSlider;
     [SerializeField] private Slider volumeSlider;
 
@@ -168,20 +169,13 @@ public class PlayerCloneController : MonoBehaviour
             GameManager.Instance.SetPlayerReferences(gameObject, playerHealth, respawnPoint);
         }
 
-        // Initialize UI
-        if (uiTimerSlider != null)
+        if (cloneTimerSlider != null)
         {
-            uiTimerSlider.maxValue = cloneRecordDuration;
-            uiTimerSlider.value = 0f;
-            uiTimerSlider.gameObject.SetActive(false);
-        }
-
-        if (volumeSlider != null)
-        {
-            volumeSlider.minValue = 0f;
-            volumeSlider.maxValue = 1f;
-            volumeSlider.value = cloneAudioVolume;
-            volumeSlider.onValueChanged.AddListener(OnVolumeChanged);
+            cloneTimerSlider.maxValue = cloneRecordDuration; // La valeur maximale est la durée d'enregistrement
+            cloneTimerSlider.minValue = 0f; // La valeur minimale est 0
+            cloneTimerSlider.direction = Slider.Direction.RightToLeft; // La barre se vide de droite à gauche
+            cloneTimerSlider.value = cloneRecordDuration; // La barre est pleine au début
+            cloneTimerSlider.gameObject.SetActive(true); // La barre est cachée par défaut
         }
 
         // Initialize audio
@@ -503,7 +497,13 @@ public class PlayerCloneController : MonoBehaviour
         {
             glowSprite2.material = originalMaterial2;
         }
-        
+
+        if (cloneTimerSlider != null)
+        {
+            cloneTimerSlider.value = cloneRecordDuration; // Remplit la barre
+            cloneTimerSlider.gameObject.SetActive(true); // Cache la barre
+        }
+
         Debug.Log("Clone recording cancelled!");
     }
 
@@ -584,10 +584,10 @@ public class PlayerCloneController : MonoBehaviour
         recordedSnapshots.Clear();
         lastSnapshotTime = Time.time;
 
-        // UI feedback
-        if (uiTimerSlider != null)
+        if (cloneTimerSlider != null)
         {
-            uiTimerSlider.gameObject.SetActive(true);
+            cloneTimerSlider.value = cloneRecordDuration; // La barre est pleine
+            cloneTimerSlider.gameObject.SetActive(true); // Afficher la barre
         }
 
         // Audio feedback
@@ -660,10 +660,9 @@ public class PlayerCloneController : MonoBehaviour
     {
         recordingTimer += Time.deltaTime;
 
-        // Update UI
-        if (uiTimerSlider != null)
+        if (cloneTimerSlider != null)
         {
-            uiTimerSlider.value = recordingTimer;
+            cloneTimerSlider.value = recordingTimer;
         }
 
         // Auto-stop recording when duration is reached
@@ -680,7 +679,7 @@ public class PlayerCloneController : MonoBehaviour
         isRecording = false;
         if (uiTimerSlider != null)
         {
-            uiTimerSlider.gameObject.SetActive(false);
+            uiTimerSlider.gameObject.SetActive(true);
         }
 
         if (cloneSystemAudioSource != null && cloneEndSoundClip != null)
@@ -732,9 +731,13 @@ public class PlayerCloneController : MonoBehaviour
 
         RespawnPlayerWithoutDeath();
 
-    
+        if (cloneTimerSlider != null)
+        {
+            cloneTimerSlider.value = cloneRecordDuration; // La barre se remplit instantanément
+            cloneTimerSlider.gameObject.SetActive(true); // Cacher la barre
+        }
 
-     
+
         if (cloningParticleSystem != null)
         {
             cloningParticleSystem.Stop();
