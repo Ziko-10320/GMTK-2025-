@@ -56,5 +56,5 @@ Material:
     m_Floats:
     - _FlashAmount: 1.53
     m_Colors:
-    - _Color: {r: 47.378185, g: 0.7507854, b: 0, a: 0}
+    - _Color: {r: 189.51274, g: 3.0031416, b: 0, a: 0}
   m_BuildTextureStacks: []

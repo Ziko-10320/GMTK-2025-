@@ -80,6 +80,23 @@ public class PlayerCloneController : MonoBehaviour
     private Vector3 platformVelocity; // Track platform velocity for smooth movement
     private bool wasOnPlatform = false; // Track if player was on platform last frame
 
+    [Header("Glow Effect During Recording")]
+    [SerializeField] private SpriteRenderer glowSprite1; // Premier sprite à faire briller
+    [SerializeField] private SpriteRenderer glowSprite2; // Deuxième sprite à faire briller
+    [SerializeField] private Material glowMaterial1; // Matériau avec effet de glow pour le premier sprite
+    [SerializeField] private Material glowMaterial2; // Matériau avec effet de glow pour le deuxième sprite
+    private Material originalMaterial1; // Matériau original du premier sprite
+    private Material originalMaterial2; // Matériau original du deuxième sprite
+
+    [Header("Particle System During Recording")]
+    [SerializeField] private ParticleSystem cloningParticleSystem; // Système de particules pour le clonage
+
+    [Header("Dust Particle Systems")]
+    [SerializeField] private ParticleSystem flipDustParticleSystem; // Système de particules pour le flip
+    [SerializeField] private ParticleSystem fallDustParticleSystem; // Système de particules pour la chute au sol
+
+    [Header("Respawn Settings")]
+    [SerializeField] private float respawnDelay = 2f; // Délai avant le respawn du joueur
     public bool IsRecordingClone { get { return isRecording; } }
 
     // UI Elements
@@ -143,6 +160,11 @@ public class PlayerCloneController : MonoBehaviour
         ghostEffect = GetComponent<GhostEffect>();
         originalGravity = rb.gravityScale;
 
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.SetPlayerReferences(gameObject, playerHealth, respawnPoint);
+        }
+
         // Initialize UI
         if (uiTimerSlider != null)
         {
@@ -201,10 +223,7 @@ public class PlayerCloneController : MonoBehaviour
 
         // Initialize PlayerHealth and subscribe to death event
         playerHealth = GetComponent<PlayerHealth>();
-        if (playerHealth != null)
-        {
-            playerHealth.OnPlayerDeath += RespawnPlayer; // Subscribe to the death event
-        }
+      
     }
 
     void Update()
@@ -212,6 +231,14 @@ public class PlayerCloneController : MonoBehaviour
         // Vérification du sol
         bool wasGrounded = isGrounded;
         isGrounded = Physics2D.OverlapCircle(groundCheck.position, 0.2f, groundLayer);
+
+       if (isGrounded && !wasGrounded) // If the player has just landed
+       {
+          if (fallDustParticleSystem != null)
+          {
+            fallDustParticleSystem.Play();
+          }
+       }
 
         // Handle fall sound
         if (!isGrounded && wasGrounded && rb.velocity.y < 0) // Just started falling
@@ -422,6 +449,10 @@ public class PlayerCloneController : MonoBehaviour
         Vector3 scaler = transform.localScale;
         scaler.x *= -1;
         transform.localScale = scaler;
+    if (flipDustParticleSystem != null)
+     {
+        flipDustParticleSystem.Play();
+     }
     }
 
     private IEnumerator StartDash()
@@ -465,6 +496,29 @@ public class PlayerCloneController : MonoBehaviour
 
     private void StartCloneRecording()
     {
+
+       
+        if (cloningParticleSystem != null)
+        {
+            var mainModule = cloningParticleSystem.main;
+            mainModule.duration = cloneRecordDuration; // Set duration to match cloning duration
+            mainModule.loop = true; // Ensure it loops
+            cloningParticleSystem.Play();
+        }
+       
+
+        if (glowSprite1 != null)
+      {
+        originalMaterial1 = glowSprite1.material;
+        glowSprite1.material = glowMaterial1;
+      }
+    
+      if (glowSprite2 != null)
+      {
+        originalMaterial2 = glowSprite2.material;
+        glowSprite2.material = glowMaterial2;
+      }
+
         isRecording = true;
         recordingTimer = 0f;
         recordedSnapshots.Clear();
@@ -494,6 +548,34 @@ public class PlayerCloneController : MonoBehaviour
         Debug.Log("Clone recording started!");
     }
 
+    public void ResetPlayerState()
+    {
+        // Réinitialiser les variables de dash
+        isDashing = false;
+        canDash = true;
+        rb.gravityScale = originalGravity; // Restaurer la gravité si elle a été modifiée par le dash
+        rb.velocity = Vector2.zero; // Arrêter tout mouvement résiduel
+
+        // Réinitialiser les paramètres de l'Animator
+        if (animator != null)
+        {
+            animator.SetBool("isDashing", false);
+            animator.SetBool("isRunning", false);
+            animator.SetBool("isJumping", false); // Assurez-vous que toutes les animations sont à leur état par défaut
+                                                  // Ajoutez ici d'autres paramètres d'animation si nécessaire
+        }
+
+        // Assurez-vous que le joueur est bien orienté (par exemple, vers la droite par défaut)
+        if (!isFacingRight)
+        {
+            Flip(); // Appelez votre méthode Flip() si elle existe et gère l'orientation
+        }
+        // Ou simplement :
+        // isFacingRight = true;
+        // transform.localScale = new Vector3(Mathf.Abs(transform.localScale.x), transform.localScale.y, transform.localScale.z);
+
+        Debug.Log("Player state reset after respawn.");
+    }
     private void HandleRecording()
     {
         recordingTimer += Time.deltaTime;
@@ -557,6 +639,23 @@ public class PlayerCloneController : MonoBehaviour
         activeClones.Add(newClone);
 
         RespawnPlayerWithoutDeath();
+
+    if (glowSprite1 != null && originalMaterial1 != null)
+    {
+        glowSprite1.material = originalMaterial1;
+    }
+    
+    if (glowSprite2 != null && originalMaterial2 != null)
+    {
+        glowSprite2.material = originalMaterial2;
+    }
+
+     
+        if (cloningParticleSystem != null)
+        {
+            cloningParticleSystem.Stop();
+        }
+       
 
         // Effacer les snapshots pour le prochain enregistrement
         recordedSnapshots.Clear();
@@ -662,39 +761,9 @@ public class PlayerCloneController : MonoBehaviour
         }
     }
 
-    // RESTORED RESPAWN LOGIC (for actual death)
-    private void RespawnPlayer()
-    {
-        // Destroy all active clones when player respawns (dies)
-        DestroyAllActiveClones();
+   
 
-        if (respawnPoint != null)
-        {
-            transform.position = respawnPoint.position;
-            rb.velocity = Vector2.zero;
-
-            // Reset platform tracking when respawning
-            currentPlatformClone = null;
-            platformVelocity = Vector3.zero;
-            wasOnPlatform = false;
-
-            // Audio feedback
-            if (respawnAudioSource != null && respawnSoundClip != null)
-            {
-                respawnAudioSource.PlayOneShot(respawnSoundClip, respawnSoundVolume);
-            }
-
-            Debug.Log("Player respawned after death!");
-        }
-        // Annuler l'enregistrement du clone si le joueur meurt pendant celui-ci
-        if (isRecording)
-        {
-            recordedSnapshots.Clear();
-            EndCloneRecording(); // Appelle la fonction pour arrêter l'enregistrement et nettoyer
-            Debug.Log("Clone recording cancelled due to player death.");
-        }
-
-    }
+   
 
     private void DestroyAllActiveClones()
     {

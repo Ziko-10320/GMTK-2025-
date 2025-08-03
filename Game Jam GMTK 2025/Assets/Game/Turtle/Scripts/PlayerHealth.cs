@@ -7,7 +7,14 @@ public class PlayerHealth : MonoBehaviour
 
     [Header("Health Settings")]
     [SerializeField] private int maxHealth = 1; // Max health, set to 1 for instant death on hazard
-    private int currentHealth;
+    public int currentHealth; // Rendre public pour GameManager
+    public int MaxHealth { get { return maxHealth; } } // Ajouter un getter public pour maxHealth
+
+    [Header("Death Particle Systems")]
+    [SerializeField] private ParticleSystem[] deathParticleSystems; // Tableau de systèmes de particules de mort
+
+    [Header("Death Spawn Points")]
+    [SerializeField] private Transform[] deathSpawnPoints; // Tableau de points de spawn pour les particules
 
     [Header("Audio Settings")]
     [SerializeField] private AudioSource deathAudioSource; // AudioSource for death sound
@@ -47,16 +54,28 @@ public class PlayerHealth : MonoBehaviour
         {
             deathAudioSource.PlayOneShot(deathSoundClip, deathSoundVolume);
         }
-        OnPlayerDeath?.Invoke(); // Trigger the death event
-        // The respawn logic will be handled by PlayerCloneController listening to this event
 
-        // Reset health for next life (PlayerCloneController will handle actual respawn position)
-        currentHealth = maxHealth;
-    }
+        // Déclencher les systèmes de particules de mort
+        for (int i = 0; i < deathParticleSystems.Length; i++)
+        {
+            if (deathParticleSystems[i] != null && deathSpawnPoints.Length > i && deathSpawnPoints[i] != null)
+            {
+                // Instancier le système de particules à la position du point de spawn
+                // ou simplement le jouer si c'est un système pré-existant
+                ParticleSystem ps = Instantiate(deathParticleSystems[i], deathSpawnPoints[i].position, Quaternion.identity);
+                ps.Play();
+                // Détruire le système de particules après sa durée pour éviter l'accumulation
+                Destroy(ps.gameObject, ps.main.duration);
+            }
+        }
 
-    public void ResetHealth()
-    {
-        currentHealth = maxHealth;
-        Debug.Log("Player health reset.");
+        // Notifier le GameManager de la mort du joueur
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.StartPlayerRespawn();
+        }
+
+        // Désactiver le joueur ici, car GameManager va gérer la réactivation
+        gameObject.SetActive(false);
     }
 }
